@@ -1,55 +1,60 @@
-import React from 'react';
+import React, { useState, FormEvent } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 import { Title, Form, Repositories } from './style';
 import logo from '../../assets/logo.svg';
+import api from '../../services/api';
 
-const Dashboard: React.FC = () => (
-  <>
-    <img src={logo} alt="Github explorer" />
-    <Title>Explore repositórios no Github</Title>
+interface Repository {
+  id: number;
+  full_name: string;
+  description: string;
+  owner: {
+    login: string;
+    avatar_url: string;
+  };
+}
 
-    <Form>
-      <input placeholder="Digite o nome do repositório" />
-      <button type="submit">Pesquisar</button>
-    </Form>
+const Dashboard: React.FC = () => {
+  const [newRepo, setNewRepo] = useState('');
+  const [repositories, setRepositories] = useState<Repository[]>([]);
 
-    <Repositories>
-      <a href="teste">
-        <img
-          src="https://avatars2.githubusercontent.com/u/55728068?s=460&u=c1f6cb88d7e1fdc47b1b66c0eb9895eacfd8d4b9&v=4"
-          alt="Micael Fernandes"
+  async function handleAddRepository(
+    e: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
+    e.preventDefault();
+    const response = await api.get<Repository>(`repos/${newRepo}`);
+    const repository = response.data;
+    setRepositories([...repositories, repository]);
+    setNewRepo('');
+  }
+
+  return (
+    <>
+      <img src={logo} alt="Github explorer" />
+      <Title>Explore repositórios no Github</Title>
+
+      <Form onSubmit={handleAddRepository}>
+        <input
+          placeholder="Digite o nome do repositório"
+          value={newRepo}
+          onChange={e => setNewRepo(e.target.value)}
         />
-        <div>
-          <strong>beTheHero</strong>
-          <p> Dev na Procenge saude, amando cada vez mais as</p>
-        </div>
-        <FiChevronRight size={20} />
-      </a>
+        <button type="submit">Pesquisar</button>
+      </Form>
 
-      <a href="teste">
-        <img
-          src="https://avatars2.githubusercontent.com/u/55728068?s=460&u=c1f6cb88d7e1fdc47b1b66c0eb9895eacfd8d4b9&v=4"
-          alt="Micael Fernandes"
-        />
-        <div>
-          <strong>beTheHero</strong>
-          <p> Dev na Procenge saude, amando cada vez mais as</p>
-        </div>
-        <FiChevronRight size={20} />
-      </a>
-
-      <a href="teste">
-        <img
-          src="https://avatars2.githubusercontent.com/u/55728068?s=460&u=c1f6cb88d7e1fdc47b1b66c0eb9895eacfd8d4b9&v=4"
-          alt="Micael Fernandes"
-        />
-        <div>
-          <strong>beTheHero</strong>
-          <p> Dev na Procenge saude, amando cada vez mais as</p>
-        </div>
-        <FiChevronRight size={20} />
-      </a>
-    </Repositories>
-  </>
-);
+      <Repositories>
+        {repositories.map(repo => (
+          <a href="teste" key={repo.id}>
+            <img src={repo.owner.avatar_url} alt="Micael Fernandes" />
+            <div>
+              <strong>{repo.full_name}</strong>
+              <p>{repo.description}</p>
+            </div>
+            <FiChevronRight size={20} />
+          </a>
+        ))}
+      </Repositories>
+    </>
+  );
+};
 export default Dashboard;
